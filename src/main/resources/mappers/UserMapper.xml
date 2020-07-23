@@ -151,4 +151,23 @@
       update_time = now()
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="checkUsername" resultMap="int" parameterMap="string">
+    SELECT COUNT(1) FROM mmall_user
+    WHERE username = #{username}
+  </select>
+
+  <select id="checkEmail" resultMap="int" parameterMap="string">
+    SELECT COUNT(1) FROM mmall_user
+    WHERE email = #{email}
+  </select>
+
+  <!--开发中，不要使用select * from；要什么查什么，防止之后表的字段增加造成的麻烦-->
+  <select id="selectLogin" resultMap="BaseResultMap" parameterType="map">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM mmall_user
+    WHERE username = #{username}
+    AND password = #{password}
+  </select>>
 </mapper>
