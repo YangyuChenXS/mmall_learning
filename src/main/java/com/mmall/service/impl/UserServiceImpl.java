@@ -2,13 +2,17 @@ package com.mmall.service.impl;
 
 import com.mmall.common.Const;
 import com.mmall.common.ServerResponse;
+import com.mmall.common.TokenCache;
 import com.mmall.dao.UserMapper;
 import com.mmall.pojo.User;
 import com.mmall.service.IUserService;
 import com.mmall.util.MD5Util;
+import net.sf.jsqlparser.schema.Server;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.UUID;
 
 @Service("iUserService")  //注入controller，供controller调用
 public class UserServiceImpl implements IUserService {
@@ -53,7 +57,7 @@ public class UserServiceImpl implements IUserService {
         if(resultCount > 0){
             return ServerResponse.createByErrorMessage("用户名已经存在");
         }*/
-
+        // 虽然用户名和email在用户表里不是主键，但是通过校验，确保唯一
         ServerResponse validResponse = this.checkValid(user.getUsername(),Const.USERNAME);
         if(!validResponse.isSuccess()){
             return validResponse;
@@ -107,5 +111,84 @@ public class UserServiceImpl implements IUserService {
             return ServerResponse.createByErrorMessage("参数错误");
         }
         return ServerResponse.createBySuccessMessage("校验成功");
+    }
+
+    /**
+     * @Description: 根据用户名查找忘记密码的提示问题
+     * @Author: XiaosongChen
+     * @Date: 18:09 2020/7/26
+     */
+    public ServerResponse selectQuestion(String username){
+        // 先校验用户名是否存在
+        ServerResponse validResponse = this.checkValid(username, Const.USERNAME);
+        if(validResponse.isSuccess()){
+            //用户不存在
+            return ServerResponse.createByErrorMessage("用户名不存在");
+        }
+        String question = userMapper.selectQuestionByUsername(username);
+        if(StringUtils.isNoneBlank(question)){
+            return ServerResponse.createBySuccess(question);
+        }
+        return ServerResponse.createByErrorMessage("找回密码的问题是空的");
+    }
+
+    /*public static void main(String[] args){
+        System.out.println(UUID.randomUUID().toString());
+    }*/
+
+    /**
+     * @Description: 校验忘记密码问题答案是否正确
+     * @Author: XiaosongChen
+     * @Date: 18:26 2020/7/26
+     */
+    public ServerResponse<String> checkAnswer(String username, String question, String answer){
+
+        int resultCount = userMapper.checkAnswer(username, question, answer);
+        if(resultCount>0){
+            //说明问题及问题答案是该用户的，并且是正确的
+            //生成唯一通用标识符；
+            String forgetToken = UUID.randomUUID().toString();
+            // 设置token的缓存
+            TokenCache.setKey(TokenCache.TOKEN_PREFIX + username, forgetToken);
+            return ServerResponse.createBySuccess(forgetToken);
+        }
+        return ServerResponse.createByErrorMessage("找回密码问题答案错误");
+    }
+
+    /**
+     * @Description: 忘记密码中的重置密码开发
+     * @Author: XiaosongChen
+     * @Date: 18:51 2020/8/2
+     */
+    public ServerResponse<String> forgetRestPassword(String username, String passwordNew, String forgetToken){
+        // 校验token是否部位不为空
+        if(org.apache.commons.lang3.StringUtils.isBlank(forgetToken)){
+            return ServerResponse.createByErrorMessage("参数错误，token需要传递");
+        }
+        // 校验用户是否存在
+        ServerResponse validResponse = this.checkValid(username, Const.USERNAME);
+        if(validResponse.isSuccess()){
+            //用户不存在
+            return ServerResponse.createByErrorMessage("用户名不存在");
+        }
+
+        // 获取token，并校验
+        String token = TokenCache.getKey(TokenCache.TOKEN_PREFIX + username);
+        if(org.apache.commons.lang3.StringUtils.isBlank(token)){
+            return ServerResponse.createByErrorMessage("token无效或者过期");
+        }
+
+        // 判断forgetToken,token是否相等，这种写法比 forgetToken.equals(token)好，不会出现空指针异常
+        if(org.apache.commons.lang3.StringUtils.equals(forgetToken,token)){
+            String md5Password = MD5Util.MD5EncodeUtf8(passwordNew);
+            int rowCount = userMapper.updatePasswordByUsername(username,md5Password);
+            if (rowCount > 0){
+                return ServerResponse.createBySuccessMessage("修改密码成功");
+            }
+        }else{
+            return ServerResponse.createByErrorMessage("token错误，请重新获取重置密码的token");
+        }
+
+        return ServerResponse.createByErrorMessage("修改密码失败");
     }
 }

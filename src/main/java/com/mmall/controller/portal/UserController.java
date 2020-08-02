@@ -59,7 +59,7 @@ public class UserController {
      * @Author: XiaosongChen
      * @Date: 19:52 2020/7/23
      */
-    @RequestMapping(value = "register.do",method = RequestMethod.POST)
+    @RequestMapping(value = "register.do",method = RequestMethod.GET)
     @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
     public ServerResponse<String> register(User user){
         return iUserService.register(user);
@@ -70,9 +70,57 @@ public class UserController {
      * @Author: XiaosongChen
      * @Date: 20:20 2020/7/23
      */
-    @RequestMapping(value = "check_valid.do",method = RequestMethod.POST)
+    @RequestMapping(value = "check_valid.do",method = RequestMethod.GET)
     @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
     public ServerResponse<String> checkValid(String str, String type){
         return iUserService.checkValid(str,type);
+    }
+
+    /**
+     * @Description: 获取用户登录信息
+     * @Author: XiaosongChen
+     * @Date: 17:39 2020/7/26
+     */
+    @RequestMapping(value = "get_user_info.do",method = RequestMethod.GET)
+    @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+    public ServerResponse<User> getUserInfo(HttpSession session){
+        User user = (User) session.getAttribute(Const.CURRENT_USER);
+        if(user != null){
+            return ServerResponse.createBySuccess(user);
+        }
+        return ServerResponse.createByErrorMessage("用户未登录，无法获取当前用户的信息");
+    }
+
+    /**
+     * @Description: 忘记密码，将提示问题返回
+     * @Author: XiaosongChen
+     * @Date: 17:47 2020/7/26
+     */
+    @RequestMapping(value = "forget_get_question.do",method = RequestMethod.GET)
+    @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+     public ServerResponse forgetGetQuestion(String username){
+        return iUserService.selectQuestion(username);
+     }
+
+     /**
+      * @Description: 校验忘记密码问题答案是否正确
+      * @Author: XiaosongChen
+      * @Date: 18:23 2020/7/26
+      */
+     @RequestMapping(value = "forget_check_answer.do",method = RequestMethod.GET)
+     @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+     public ServerResponse<String> forgetCheckAnswer(String username, String question, String answer){
+        return iUserService.checkAnswer(username,question,answer);
+     }
+
+    /**
+     * @Description: 忘记密码中的重置密码开发
+     * @Author: XiaosongChen
+     * @Date: 18:42 2020/8/2
+     */
+    @RequestMapping(value = "forget_reset_password.do",method = RequestMethod.GET)
+    @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+    public ServerResponse<String> forgetRestPassword(String username, String passwordNew, String forgetToken){
+        return iUserService.forgetRestPassword(username, passwordNew, forgetToken);
     }
 }
