@@ -45,9 +45,23 @@ public interface IUserService {
     ServerResponse<String> checkAnswer(String username, String question, String answer);
 
     /**
-     * @Description: 忘记密码中的重置密码开发
+     * @Description: 忘记密码中的重置密码接口
      * @Author: XiaosongChen
      * @Date: 18:51 2020/8/2
      */
     ServerResponse<String> forgetRestPassword(String username, String passwordNew, String forgetToken);
+
+    /**
+     * @Description: 登录状态下重置密码功能接口
+     * @Author: XiaosongChen
+     * @Date: 18:54 2020/8/9
+     */
+    ServerResponse<String> resetPassword(String passwordOld, String passwordNew,User user);
+    
+    /**
+     * @Description: 更新用户个人信息功能接口
+     * @Author: XiaosongChen
+     * @Date: 20:45 2020/8/10
+     */ 
+    ServerResponse<User> updateInformation(User user);
 }

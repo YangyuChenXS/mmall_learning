@@ -195,4 +195,20 @@
     WHERE username = #{username}
   </select>
 
+  <select id="checkPassword" resultType="int" parameterType="map">
+    SELECT
+     COUNT(1)
+    FROM mmall_user
+    WHERE password = #{password}
+    AND id = #{userId}
+  </select>
+
+  <select id="checkEmailByUserId" resultType="int" parameterType="map">
+    SELECT
+     COUNT(1)
+    FROM mmall_user
+    WHERE email = #{email}
+    AND id != #{userId}
+  </select>
+
 </mapper>

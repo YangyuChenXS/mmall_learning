@@ -22,7 +22,7 @@ import javax.servlet.http.HttpSession;
 @RequestMapping("/user/")  // 将该门户_用户接口的请求地址全都定为/user/下
 public class UserController {
 
-    @Autowired
+    @Autowired //自动new这个对象
     private IUserService iUserService;
 
     /**
@@ -122,5 +122,45 @@ public class UserController {
     @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
     public ServerResponse<String> forgetRestPassword(String username, String passwordNew, String forgetToken){
         return iUserService.forgetRestPassword(username, passwordNew, forgetToken);
+    }
+
+    /**
+     * @Description: 登录状态下重置密码功能开发
+     * @Author: XiaosongChen
+     * @Date: 18:22 2020/8/9
+     */
+    @RequestMapping(value = "reset_password.do",method = RequestMethod.GET)
+    @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+    public ServerResponse<String> resetPassword(HttpSession session, String passwordOld, String passwordNew){
+        User user = (User)session.getAttribute(Const.CURRENT_USER);
+        if(user == null){
+            return ServerResponse.createByErrorMessage("用户未登录");
+        }
+        return iUserService.resetPassword(passwordOld,passwordNew,user);
+    }
+
+    /**
+     * @Description:  更新用户个人信息功能开发
+     * @Author: XiaosongChen
+     * @Date: 20:24 2020/8/10
+     */
+    @RequestMapping(value = "update_information.do",method = RequestMethod.GET)
+    @ResponseBody // 可以将返回的数据，通过SpringMVC插件自动化序列为JSON对象
+    public ServerResponse<User> updateInformation(HttpSession session, User user){
+        //先校验当前是否有用户登录
+        User currentUser = (User) session.getAttribute(Const.CURRENT_USER);
+        if(currentUser == null){
+            return ServerResponse.createByErrorMessage("用户未登录");
+        }
+        //确保修改的个人信息只能是当前用户的信息, 防止越权
+        user.setId(currentUser.getId());
+        user.setUsername(currentUser.getUsername());
+
+        ServerResponse<User> response = iUserService.updateInformation(user);
+        if(response.isSuccess()){
+            session.setAttribute(Const.CURRENT_USER,response.getData());
+        }
+        // 更新失败，则直接返回，因为此时的response 就是 ServerResponse.createByErrorMessage("更新个人信息失败")
+        return response;
     }
 }
