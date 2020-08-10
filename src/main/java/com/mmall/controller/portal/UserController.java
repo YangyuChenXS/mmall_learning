@@ -163,4 +163,6 @@ public class UserController {
         // 更新失败，则直接返回，因为此时的response 就是 ServerResponse.createByErrorMessage("更新个人信息失败")
         return response;
     }
+
+    // todo 测试同时推送
 }
